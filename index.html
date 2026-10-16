@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scamonopoly</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: #f5f7ff;
+      background: #10172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+      background: #1b2540;
+      border: 1px solid #354466;
+      border-radius: 24px;
+      padding: 36px 24px;
+      box-shadow: 0 20px 60px #0005;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #293958;
+      color: #a8f0d0;
+      padding: 8px 14px;
+      border-radius: 30px;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    h1 {
+      font-size: clamp(38px, 9vw, 56px);
+      margin: 22px 0 10px;
+    }
+
+    h1 span { color: #a8f0d0; }
+
+    p {
+      color: #c3cce0;
+      line-height: 1.6;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      margin-top: 12px;
+    }
+
+    input {
+      border: 1px solid #506184;
+      background: #111a2d;
+      color: white;
+    }
+
+    button {
+      border: none;
+      background: #a8f0d0;
+      color: #10271f;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover { background: #c2ffe5; }
+
+    #message {
+      color: #a8f0d0;
+      min-height: 24px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #9eabc6;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="badge">A SCAM-DETECTION BOARD GAME</div>
+    <h1>SCAM<span>ONOPOLY</span></h1>
+    <p>Trust nobody. Check everything.<br>Can you spot the Scammer?</p>
+
+    <form id="joinForm">
+      <input id="nickname" maxlength="20"
+        placeholder="Enter your player nickname"
+        aria-label="Player nickname" required>
+      <button type="submit">Enter the game</button>
+    </form>
+
+    <p id="message" aria-live="polite"></p>
+    <p class="note">
+      Your physical board handles movement, properties and clues.
+      This website is your digital game companion.
+    </p>
+  </main>
+
+  <script>
+    document.getElementById("joinForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const nickname = document.getElementById("nickname").value.trim();
+      if (!nickname) return;
+      document.getElementById("message").textContent =
+        "Welcome, " + nickname + "! Your game lobby is coming soon.";
+    });
+  </script>
+</body>
+</html>
