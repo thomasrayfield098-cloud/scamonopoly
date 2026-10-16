@@ -3,193 +3,209 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Scamonopoly</title>
-
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      color: #f5f7ff;
+      margin: 0; min-height: 100vh; padding: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Arial, sans-serif; color: #f5f7ff;
       background: #10172a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
     }
-
     main {
-      width: 100%;
-      max-width: 520px;
-      text-align: center;
-      background: #1b2540;
-      border: 1px solid #354466;
-      border-radius: 24px;
-      padding: 36px 24px;
+      width: 100%; max-width: 520px; text-align: center;
+      background: #1b2540; border: 1px solid #354466;
+      border-radius: 24px; padding: 32px 24px;
       box-shadow: 0 20px 60px #0005;
     }
-
     .badge {
-      display: inline-block;
-      background: #293958;
-      color: #a8f0d0;
-      padding: 8px 14px;
-      border-radius: 30px;
-      font-size: 13px;
-      letter-spacing: 1px;
+      display: inline-block; background: #293958; color: #a8f0d0;
+      padding: 8px 14px; border-radius: 30px;
+      font-size: 12px; letter-spacing: 1px;
     }
-
-    h1 {
-      font-size: clamp(38px, 9vw, 56px);
-      margin: 22px 0 10px;
-    }
-
-    h1 span {
-      color: #a8f0d0;
-    }
-
-    p {
-      color: #c3cce0;
-      line-height: 1.6;
-    }
-
+    h1 { font-size: clamp(36px, 9vw, 54px); margin: 22px 0 10px; }
+    h1 span { color: #a8f0d0; }
+    p { color: #c3cce0; line-height: 1.6; }
     input, button {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 16px;
-      margin-top: 12px;
+      width: 100%; padding: 14px; border-radius: 12px;
+      font-size: 16px; margin-top: 12px;
     }
-
     input {
-      border: 1px solid #506184;
-      background: #111a2d;
+      border: 1px solid #506184; background: #111a2d;
       color: white;
     }
-
     button {
-      border: none;
-      background: #a8f0d0;
-      color: #10271f;
-      font-weight: bold;
-      cursor: pointer;
+      border: 0; background: #a8f0d0; color: #10271f;
+      font-weight: bold; cursor: pointer;
     }
-
-    button:hover {
-      background: #c2ffe5;
+    button:hover { background: #c2ffe5; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .secondary { background: #293958; color: #f5f7ff; }
+    .secondary:hover { background: #354466; }
+    #message { min-height: 24px; overflow-wrap: anywhere; }
+    #roomArea { display: none; margin-top: 20px; }
+    #roomCode {
+      font-size: 30px; font-weight: bold; letter-spacing: 5px;
+      color: #a8f0d0; overflow-wrap: anywhere;
     }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
-    #message {
-      color: #a8f0d0;
-      min-height: 24px;
-      overflow-wrap: anywhere;
-    }
-
-    .note {
-      font-size: 12px;
-      color: #9eabc6;
-      margin-top: 24px;
-    }
+    .note { font-size: 12px; color: #9eabc6; margin-top: 24px; }
   </style>
 </head>
-
 <body>
   <main>
     <div class="badge">A SCAM-DETECTION BOARD GAME</div>
-
     <h1>SCAM<span>ONOPOLY</span></h1>
-
-    <p>
-      Trust nobody. Check everything.<br>
-      Can you spot the Scammer?
-    </p>
+    <p>Trust nobody. Check everything.<br>Can you spot the Scammer?</p>
 
     <form id="joinForm">
-      <input
-        id="nickname"
-        maxlength="20"
+      <input id="nickname" maxlength="20"
         placeholder="Enter your player nickname"
-        aria-label="Player nickname"
-        autocomplete="nickname"
-        required
-      >
-
-      <button type="submit">Enter the game</button>
+        aria-label="Player nickname" required>
+      <button id="enterButton" type="submit">Enter the game</button>
     </form>
 
-    <p id="message" aria-live="polite"></p>
+    <section id="roomArea">
+      <button id="createButton" type="button">Create a room</button>
+      <p>Or join a friend's room:</p>
+      <input id="roomInput" maxlength="6"
+        placeholder="Enter 6-character room code"
+        aria-label="Room code" autocomplete="off">
+      <button id="joinButton" class="secondary" type="button">
+        Join a room
+      </button>
+      <p id="roomResult"></p>
+      <p id="roomCode"></p>
+    </section>
 
+    <p id="message" aria-live="polite"></p>
     <p class="note">
       Your physical board handles movement, properties and clues.
       This website is your digital game companion.
     </p>
   </main>
 
-  <!-- Load Supabase first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Load your project configuration -->
   <script src="./config.js"></script>
-
-  <!-- Connect the website to Supabase -->
   <script>
-    window.scamonopolySupabase = window.supabase.createClient(
+    const supabase = window.supabase.createClient(
       window.SCAMONOPOLY_CONFIG.SUPABASE_URL,
       window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY
     );
 
-    console.log("Scamonopoly connection is ready!");
-  </script>
+    const form = document.getElementById("joinForm");
+    const nicknameInput = document.getElementById("nickname");
+    const message = document.getElementById("message");
+    const roomArea = document.getElementById("roomArea");
+    const roomResult = document.getElementById("roomResult");
+    const roomCodeDisplay = document.getElementById("roomCode");
+    const enterButton = document.getElementById("enterButton");
+    const createButton = document.getElementById("createButton");
+    const joinButton = document.getElementById("joinButton");
 
-  <!-- Sign players in anonymously -->
-  <script>
-    document.getElementById("joinForm").addEventListener(
-      "submit",
-      async function(event) {
-        event.preventDefault();
+    let signedIn = false;
 
-        const nickname =
-          document.getElementById("nickname").value.trim();
-        const message = document.getElementById("message");
-        const button = this.querySelector("button");
+    async function signIn() {
+      const { data: sessionData } = await supabase.auth.getSession();
 
-        if (!nickname) return;
-
-        button.disabled = true;
-        message.textContent = "Signing you in...";
-
-        try {
-          const { data, error } =
-            await window.scamonopolySupabase.auth.signInAnonymously();
-
-          if (error) throw error;
-
-          message.textContent =
-            "Signed in successfully, " + nickname +
-            "! Next we'll connect you to a game room.";
-
-          console.log("Anonymous sign-in successful.");
-        } catch (error) {
-          message.textContent =
-            "Sign-in failed. Please try again in a moment.";
-
-          console.error("Sign-in error:", error.message);
-        } finally {
-          button.disabled = false;
-        }
+      if (sessionData.session) {
+        signedIn = true;
+        return;
       }
-    );
+
+      const { error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      signedIn = true;
+    }
+
+    async function callGameServer(payload) {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError || !sessionData.session) {
+        throw new Error("Please enter your nickname again to sign in.");
+      }
+
+      const response = await fetch(
+        window.SCAMONOPOLY_CONFIG.SUPABASE_URL +
+          "/functions/v1/scamonopoly",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": "Bearer " + sessionData.session.access_token
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Something went wrong.");
+      return result;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const nickname = nicknameInput.value.trim();
+      if (!nickname) return;
+
+      enterButton.disabled = true;
+      message.textContent = "Signing you in...";
+
+      try {
+        await signIn();
+        message.textContent = "Signed in successfully, " + nickname + "!";
+        roomArea.style.display = "block";
+        nicknameInput.disabled = true;
+        enterButton.textContent = "Signed in";
+      } catch (error) {
+        message.textContent = "Sign-in failed: " + error.message;
+      } finally {
+        enterButton.disabled = false;
+      }
+    });
+
+    createButton.addEventListener("click", async () => {
+      createButton.disabled = true;
+      roomResult.textContent = "Creating room...";
+      roomCodeDisplay.textContent = "";
+
+      try {
+        if (!signedIn) await signIn();
+        const result = await callGameServer({
+          action: "create_room",
+          nickname: nicknameInput.value.trim()
+        });
+        roomResult.textContent = result.message;
+        roomCodeDisplay.textContent = result.roomCode;
+      } catch (error) {
+        roomResult.textContent = error.message;
+      } finally {
+        createButton.disabled = false;
+      }
+    });
+
+    joinButton.addEventListener("click", async () => {
+      joinButton.disabled = true;
+      roomResult.textContent = "Joining room...";
+      roomCodeDisplay.textContent = "";
+
+      try {
+        if (!signedIn) await signIn();
+        const result = await callGameServer({
+          action: "join_room",
+          nickname: nicknameInput.value.trim(),
+          roomCode: document.getElementById("roomInput").value.trim()
+        });
+        roomResult.textContent = result.message;
+        roomCodeDisplay.textContent = result.roomCode;
+      } catch (error) {
+        roomResult.textContent = error.message;
+      } finally {
+        joinButton.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
-
