@@ -118,5 +118,17 @@
         "Welcome, " + nickname + "! Your game lobby is coming soon.";
     });
   </script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script>
+  window.scamonopolySupabase = window.supabase.createClient(
+    window.SCAMONOPOLY_CONFIG.SUPABASE_URL,
+    window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY
+  );
+
+  console.log("Scamonopoly connection is ready!");
+</script>
+
 </body>
 </html>
