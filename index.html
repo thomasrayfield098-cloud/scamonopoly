@@ -8,230 +8,317 @@
   <style>
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: Arial, sans-serif;
-      color: #f5f7ff;
+      margin: 0; min-height: 100vh; padding: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Arial, sans-serif; color: #f5f7ff;
       background: #10172a;
     }
     main {
-      width: 100%;
-      max-width: 520px;
-      text-align: center;
-      background: #1b2540;
-      border: 1px solid #354466;
-      border-radius: 24px;
-      padding: 32px 24px;
+      width: 100%; max-width: 560px; text-align: center;
+      background: #1b2540; border: 1px solid #354466;
+      border-radius: 24px; padding: 32px 24px;
       box-shadow: 0 20px 60px #0005;
     }
     .badge {
-      display: inline-block;
-      background: #293958;
-      color: #a8f0d0;
-      padding: 8px 14px;
-      border-radius: 30px;
-      font-size: 12px;
+      display: inline-block; background: #293958; color: #a8f0d0;
+      padding: 8px 14px; border-radius: 30px; font-size: 12px;
       letter-spacing: 1px;
     }
-    h1 {
-      font-size: clamp(36px, 9vw, 54px);
-      margin: 22px 0 10px;
-    }
+    h1 { font-size: clamp(36px, 9vw, 54px); margin: 22px 0 10px; }
     h1 span { color: #a8f0d0; }
     p { color: #c3cce0; line-height: 1.6; }
     input, button {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 16px;
-      margin-top: 12px;
+      width: 100%; padding: 14px; border-radius: 12px;
+      font-size: 16px; margin-top: 12px;
     }
     input {
-      border: 1px solid #506184;
-      background: #111a2d;
-      color: white;
+      border: 1px solid #506184; background: #111a2d; color: white;
     }
     button {
-      border: 0;
-      background: #a8f0d0;
-      color: #10271f;
-      font-weight: bold;
-      cursor: pointer;
+      border: 0; background: #a8f0d0; color: #10271f;
+      font-weight: bold; cursor: pointer;
     }
     button:disabled { opacity: .6; cursor: wait; }
     .secondary { background: #293958; color: #f5f7ff; }
+    .danger { background: #e9a4a4; }
     #message, #roomResult { overflow-wrap: anywhere; }
-    #roomArea { display: none; margin-top: 20px; }
+    #roomArea, #lobby, #gameArea { display: none; margin-top: 20px; }
     #roomCode {
-      font-size: 30px;
-      font-weight: bold;
-      letter-spacing: 5px;
-      color: #a8f0d0;
-      overflow-wrap: anywhere;
+      font-size: 30px; font-weight: bold; letter-spacing: 5px;
+      color: #a8f0d0; overflow-wrap: anywhere;
     }
+    .panel {
+      background: #111a2d; border: 1px solid #354466;
+      border-radius: 16px; padding: 16px; margin-top: 16px;
+      text-align: left;
+    }
+    .panel h2 { margin-top: 0; font-size: 20px; }
+    #playerList { padding-left: 24px; line-height: 1.9; }
+    .status { color: #a8f0d0; font-weight: bold; }
     .note { font-size: 12px; color: #9eabc6; margin-top: 24px; }
   </style>
 </head>
 <body>
-  <main>
-    <div class="badge">A SCAM-DETECTION BOARD GAME</div>
-    <h1>SCAM<span>ONOPOLY</span></h1>
-    <p>Trust nobody. Check everything.<br>Can you spot the Scammer?</p>
+<main>
+  <div class="badge">A SCAM-DETECTION BOARD GAME</div>
+  <h1>SCAM<span>ONOPOLY</span></h1>
+  <p>Trust nobody. Check everything.<br>Can you spot the Scammer?</p>
 
-    <form id="joinForm">
-      <input id="nickname" maxlength="20"
-        placeholder="Enter your player nickname"
-        aria-label="Player nickname" required>
-      <button id="enterButton" type="submit">Enter the game</button>
-    </form>
+  <form id="joinForm">
+    <input id="nickname" maxlength="20"
+      placeholder="Enter your player nickname"
+      aria-label="Player nickname" required>
+    <button id="enterButton" type="submit">Enter the game</button>
+  </form>
 
-    <section id="roomArea">
-      <button id="createButton" type="button">Create a room</button>
-      <p>Or join a friend's room:</p>
-      <input id="roomInput" maxlength="6"
-        placeholder="Enter 6-character room code"
-        aria-label="Room code" autocomplete="off">
-      <button id="joinButton" class="secondary" type="button">
-        Join a room
-      </button>
-      <p id="roomResult" aria-live="polite"></p>
-      <p id="roomCode"></p>
-    </section>
+  <section id="roomArea">
+    <button id="createButton" type="button">Create a room</button>
+    <p>Or join a friend's room:</p>
+    <input id="roomInput" maxlength="6"
+      placeholder="Enter room code" aria-label="Room code"
+      autocomplete="off">
+    <button id="joinButton" class="secondary" type="button">Join a room</button>
+    <p id="roomResult" aria-live="polite"></p>
+    <p id="roomCode"></p>
+  </section>
 
-    <p id="message" aria-live="polite"></p>
-    <p class="note">
-      Your physical board handles movement, properties and clues.
-      This website is your digital game companion.
-    </p>
-  </main>
+  <section id="lobby">
+    <div class="panel">
+      <h2>Game lobby</h2>
+      <p>Room code: <strong id="lobbyCode"></strong></p>
+      <p>Status: <span class="status" id="lobbyStatus">Waiting</span></p>
+      <p>Players: <span id="playerCount">0</span> / 7</p>
+      <ul id="playerList"></ul>
+      <p id="lobbyMessage" aria-live="polite"></p>
+    </div>
+    <button id="refreshButton" class="secondary" type="button">
+      Refresh player list
+    </button>
+    <button id="startButton" type="button" style="display:none">
+      Start game
+    </button>
+    <p id="roleMessage" aria-live="polite"></p>
+  </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./config.js"></script>
-  <script>
-    (() => {
-      const sb = window.supabase.createClient(
-        window.SCAMONOPOLY_CONFIG.SUPABASE_URL,
-        window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY
-      );
+  <section id="gameArea">
+    <div class="panel">
+      <h2>Your secret role</h2>
+      <p id="roleDisplay" class="status"></p>
+      <p>Keep your role secret. Use the physical board to play.</p>
+    </div>
+  </section>
 
-      const form = document.getElementById("joinForm");
-      const nicknameInput = document.getElementById("nickname");
-      const message = document.getElementById("message");
-      const roomArea = document.getElementById("roomArea");
-      const roomResult = document.getElementById("roomResult");
-      const roomCodeDisplay = document.getElementById("roomCode");
-      const enterButton = document.getElementById("enterButton");
-      const createButton = document.getElementById("createButton");
-      const joinButton = document.getElementById("joinButton");
-      const roomInput = document.getElementById("roomInput");
+  <p id="message" aria-live="polite"></p>
+  <p class="note">
+    Your physical board handles movement, properties and clues.
+    This website is your digital game companion.
+  </p>
+</main>
 
-      async function signIn() {
-        const { data, error } = await sb.auth.getSession();
-        if (error) throw error;
-        if (data.session) return;
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script>
+(() => {
+  const sb = window.supabase.createClient(
+    window.SCAMONOPOLY_CONFIG.SUPABASE_URL,
+    window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY
+  );
 
-        const result = await sb.auth.signInAnonymously();
-        if (result.error) throw result.error;
+  const $ = id => document.getElementById(id);
+  let currentRoomCode = "";
+  let isHost = false;
+  let refreshTimer = null;
+  let gameStarted = false;
+
+  async function signIn() {
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    if (data.session) return;
+    const result = await sb.auth.signInAnonymously();
+    if (result.error) throw result.error;
+  }
+
+  async function callGameServer(payload) {
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    if (!data.session) throw new Error("Please sign in again.");
+
+    const response = await fetch(
+      window.SCAMONOPOLY_CONFIG.SUPABASE_URL +
+        "/functions/v1/scamonopoly",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": "Bearer " + data.session.access_token
+        },
+        body: JSON.stringify(payload)
       }
+    );
 
-      async function callGameServer(payload) {
-        const { data, error } = await sb.auth.getSession();
-        if (error) throw error;
-        if (!data.session) {
-          throw new Error("Please enter your nickname again to sign in.");
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Request failed.");
+    if (result.error) throw new Error(result.error);
+    return result;
+  }
+
+  function showRoom(code) {
+    currentRoomCode = code;
+    $("roomCode").textContent = code;
+    $("lobbyCode").textContent = code;
+    $("roomArea").style.display = "none";
+    $("lobby").style.display = "block";
+    $("gameArea").style.display = "none";
+    $("roleMessage").textContent = "";
+    refreshLobby();
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(refreshLobby, 4000);
+  }
+
+  async function refreshLobby() {
+    if (!currentRoomCode) return;
+    $("refreshButton").disabled = true;
+    try {
+      const result = await callGameServer({
+        action: "get_lobby",
+        roomCode: currentRoomCode
+      });
+
+      isHost = result.isHost;
+      const players = result.players || [];
+      $("playerCount").textContent = result.playerCount ?? players.length;
+      $("lobbyStatus").textContent = result.status || "waiting";
+
+      $("playerList").replaceChildren();
+      players.forEach(player => {
+        const li = document.createElement("li");
+        li.textContent = typeof player === "string"
+          ? player
+          : player.nickname;
+        $("playerList").appendChild(li);
+      });
+
+      const playing = result.status === "playing";
+      $("startButton").style.display =
+        isHost && !playing ? "block" : "none";
+
+      if (playing) {
+        gameStarted = true;
+        $("lobbyMessage").textContent = "The game has started.";
+        $("roleDisplay").textContent = result.myRole === "scammer"
+          ? "You are the SCAMMER."
+          : result.myRole === "scout"
+            ? "You are a SCOUT."
+            : "Your role could not be loaded. Refresh the lobby.";
+        $("gameArea").style.display = "block";
+        if (result.myRole) {
+          $("lobby").style.display = "none";
+          if (refreshTimer) clearInterval(refreshTimer);
         }
-
-        const response = await fetch(
-          window.SCAMONOPOLY_CONFIG.SUPABASE_URL +
-            "/functions/v1/scamonopoly",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY,
-              "Authorization": "Bearer " + data.session.access_token
-            },
-            body: JSON.stringify(payload)
-          }
-        );
-
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || "Something went wrong.");
-        }
-        return result;
+      } else {
+        $("lobbyMessage").textContent = isHost
+          ? "You are the host. Start when 5–7 players have joined."
+          : "Waiting for the host to start the game.";
       }
+    } catch (error) {
+      $("lobbyMessage").textContent = "Lobby error: " + error.message;
+    } finally {
+      $("refreshButton").disabled = false;
+    }
+  }
 
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const nickname = nicknameInput.value.trim();
-        if (!nickname) {
-          message.textContent = "Please enter a nickname.";
-          return;
-        }
+  $("joinForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    const nickname = $("nickname").value.trim();
+    if (!nickname) {
+      $("message").textContent = "Enter a nickname.";
+      return;
+    }
 
-        enterButton.disabled = true;
-        message.textContent = "Signing you in...";
+    $("enterButton").disabled = true;
+    $("message").textContent = "Signing in...";
+    try {
+      await signIn();
+      $("nickname").disabled = true;
+      $("enterButton").textContent = "Signed in";
+      $("roomArea").style.display = "block";
+      $("message").textContent = "Signed in as " + nickname + ".";
+    } catch (error) {
+      $("message").textContent = "Sign-in failed: " + error.message;
+    } finally {
+      $("enterButton").disabled = false;
+    }
+  });
 
-        try {
-          await signIn();
-          nicknameInput.disabled = true;
-          enterButton.textContent = "Signed in";
-          roomArea.style.display = "block";
-          message.textContent =
-            "Signed in successfully, " + nickname + "!";
-        } catch (error) {
-          message.textContent = "Sign-in failed: " + error.message;
-        } finally {
-          enterButton.disabled = false;
-        }
+  $("createButton").addEventListener("click", async () => {
+    $("createButton").disabled = true;
+    $("roomResult").textContent = "Creating room...";
+    try {
+      await signIn();
+      const result = await callGameServer({
+        action: "create_room",
+        nickname: $("nickname").value.trim()
       });
+      $("roomResult").textContent = result.message || "Room created.";
+      if (result.roomCode) showRoom(result.roomCode);
+    } catch (error) {
+      $("roomResult").textContent = error.message;
+    } finally {
+      $("createButton").disabled = false;
+    }
+  });
 
-      createButton.addEventListener("click", async () => {
-        createButton.disabled = true;
-        roomResult.textContent = "Creating room...";
-        roomCodeDisplay.textContent = "";
-
-        try {
-          await signIn();
-          const result = await callGameServer({
-            action: "create_room",
-            nickname: nicknameInput.value.trim()
-          });
-          roomResult.textContent = result.message;
-          roomCodeDisplay.textContent = result.roomCode || "";
-        } catch (error) {
-          roomResult.textContent = error.message;
-        } finally {
-          createButton.disabled = false;
-        }
+  $("joinButton").addEventListener("click", async () => {
+    $("joinButton").disabled = true;
+    $("roomResult").textContent = "Joining room...";
+    try {
+      await signIn();
+      const result = await callGameServer({
+        action: "join_room",
+        nickname: $("nickname").value.trim(),
+        roomCode: $("roomInput").value.trim().toUpperCase()
       });
+      $("roomResult").textContent = result.message || "Joined room.";
+      if (result.roomCode) showRoom(result.roomCode);
+    } catch (error) {
+      $("roomResult").textContent = error.message;
+    } finally {
+      $("joinButton").disabled = false;
+    }
+  });
 
-      joinButton.addEventListener("click", async () => {
-        joinButton.disabled = true;
-        roomResult.textContent = "Joining room...";
-        roomCodeDisplay.textContent = "";
+  $("refreshButton").addEventListener("click", refreshLobby);
 
-        try {
-          await signIn();
-          const result = await callGameServer({
-            action: "join_room",
-            nickname: nicknameInput.value.trim(),
-            roomCode: roomInput.value.trim()
-          });
-          roomResult.textContent = result.message;
-          roomCodeDisplay.textContent = result.roomCode || "";
-        } catch (error) {
-          roomResult.textContent = error.message;
-        } finally {
-          joinButton.disabled = false;
-        }
+  $("startButton").addEventListener("click", async () => {
+    $("startButton").disabled = true;
+    $("lobbyMessage").textContent = "Starting game...";
+    try {
+      const result = await callGameServer({
+        action: "start_game",
+        roomCode: currentRoomCode
       });
-    })();
-  </script>
+      if (result.myRole) {
+        $("roleDisplay").textContent = result.myRole === "scammer"
+          ? "You are the SCAMMER."
+          : "You are a SCOUT.";
+        $("gameArea").style.display = "block";
+        $("lobby").style.display = "none";
+        if (refreshTimer) clearInterval(refreshTimer);
+      } else {
+        await refreshLobby();
+      }
+    } catch (error) {
+      $("lobbyMessage").textContent = "Could not start: " + error.message;
+    } finally {
+      $("startButton").disabled = false;
+    }
+  });
+
+  window.addEventListener("beforeunload", () => {
+    if (refreshTimer) clearInterval(refreshTimer);
+  });
+})();
+</script>
 </body>
 </html>
