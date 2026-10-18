@@ -97,6 +97,10 @@
     <button id="startButton" type="button" style="display:none">
       Start game
     </button>
+    <button id="testPlayersButton" class="secondary"
+        type="button" style="display:none">
+  🧪 Test Players
+</button>
     <p id="roleMessage" aria-live="polite"></p>
   </section>
 
@@ -202,6 +206,8 @@
       const playing = result.status === "playing";
       $("startButton").style.display =
         isHost && !playing ? "block" : "none";
+      $("testPlayersButton").style.display =
+  isHost && !playing ? "block" : "none";
 
       if (playing) {
         gameStarted = true;
