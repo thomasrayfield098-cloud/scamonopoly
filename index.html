@@ -295,6 +295,27 @@
   });
 
   $("refreshButton").addEventListener("click", refreshLobby);
+    $("testPlayersButton").addEventListener("click", async () => {
+    const button = $("testPlayersButton");
+    button.disabled = true;
+    $("lobbyMessage").textContent = "Adding test players...";
+
+    try {
+      const result = await callGameServer({
+        action: "create_test_players",
+        roomCode: currentRoomCode
+      });
+
+      $("lobbyMessage").textContent =
+        result.message || "Test players added.";
+      await refreshLobby();
+    } catch (error) {
+      $("lobbyMessage").textContent =
+        "Test players couldn't be added: " + error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   $("startButton").addEventListener("click", async () => {
     $("startButton").disabled = true;
