@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,7 @@
   <style>
     * { box-sizing: border-box; }
     body {
-      margin: 0; min-height: 100vh; padding: 20px;
+      margin: 0; min-height: 100vh; padding: clamp(10px, 3vw, 20px);
       display: flex; align-items: center; justify-content: center;
       font-family: Arial, sans-serif; color: #f5f7ff;
       background: #10172a;
@@ -16,7 +15,7 @@
     main {
       width: 100%; max-width: 560px; text-align: center;
       background: #1b2540; border: 1px solid #354466;
-      border-radius: 24px; padding: 32px 24px;
+      border-radius: 24px; padding: clamp(16px, 4vw, 32px) clamp(12px, 4vw, 24px);
       box-shadow: 0 20px 60px #0005;
     }
     .badge {
@@ -63,35 +62,50 @@
     .chat-message { background:#293958; padding:10px 12px; border-radius:12px; overflow-wrap:anywhere; }
     .chat-meta { color:#a8f0d0; font-size:12px; margin-bottom:4px; }
     .request-card { border:1px solid #506184; border-radius:12px; padding:12px; margin:10px 0; }
-    .inline-actions { display:flex; gap:8px; }
-    .inline-actions button { flex:1; }
-    .inline-actions .secondary { margin-top:12px; }
+    .inline-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .inline-actions button { flex:1; min-width:110px; }
     .small { font-size:12px; color:#9eabc6; }
-    @media(min-width:700px){ .game-grid { grid-template-columns: 0.9fr 1.1fr; } }
+    select { max-width:100%; font-size:16px; }
+    button { min-height:46px; touch-action:manipulation; }
+    @media(min-width:700px) {
+      .game-grid { grid-template-columns:0.9fr 1.1fr; }
+    }
+    @media(max-width:420px) {
+      body { padding:8px; align-items:flex-start; }
+      main { border-radius:16px; padding:14px 10px; }
+      .panel { padding:12px; }
+      h1 { font-size:clamp(30px, 10vw, 42px); }
+      .chat-log { height:220px; }
+      .inline-actions { flex-direction:column; gap:4px; }
+      .inline-actions button { margin-top:6px; }
+    }
   </style>
 </head>
 <body>
 <main>
-  <div class="badge">A SCAM-DETECTION BOARD GAME</div>
-  <h1>SCAM<span>ONOPOLY</span></h1>
-  <p>Trust nobody. Check everything.<br>Can you spot the Scammer?</p>
+  <header id="siteHeader">
+    <div class="badge">A SCAM-DETECTION BOARD GAME</div>
+    <h1>SCAM<span>ONOPOLY</span></h1>
+    <p>Trust nobody. Check everything.<br>Can you spot the Scammer?</p>
+  </header>
 
-  <form id="joinForm">
-    <input id="nickname" maxlength="20"
-      placeholder="Enter your player nickname"
-      aria-label="Player nickname" required>
-    <button id="enterButton" type="submit">Enter the game</button>
-  </form>
-
-  <section id="roomArea">
-    <button id="createButton" type="button">Create a room</button>
-    <p>Or join a friend's room:</p>
-    <input id="roomInput" maxlength="6"
-      placeholder="Enter room code" aria-label="Room code"
-      autocomplete="off">
-    <button id="joinButton" class="secondary" type="button">Join a room</button>
-    <p id="roomResult" aria-live="polite"></p>
-    <p id="roomCode"></p>
+  <section id="setupArea">
+    <form id="joinForm">
+      <input id="nickname" maxlength="20"
+        placeholder="Enter your player nickname"
+        aria-label="Player nickname" required>
+      <button id="enterButton" type="submit">Enter the game</button>
+    </form>
+    <section id="roomArea">
+      <button id="createButton" type="button">Create a room</button>
+      <p>Or join a friend's room:</p>
+      <input id="roomInput" maxlength="6"
+        placeholder="Enter room code" aria-label="Room code"
+        autocomplete="off">
+      <button id="joinButton" class="secondary" type="button">Join a room</button>
+      <p id="roomResult" aria-live="polite"></p>
+      <p id="roomCode"></p>
+    </section>
   </section>
 
   <section id="lobby">
@@ -103,15 +117,9 @@
       <ul id="playerList"></ul>
       <p id="lobbyMessage" aria-live="polite"></p>
     </div>
-    <button id="refreshButton" class="secondary" type="button">
-      Refresh player list
-    </button>
-    <button id="startButton" type="button" style="display:none">
-      Start game
-    </button>
-    <button id="testPlayersButton" class="secondary" type="button" style="display:none">
-      Add test players (test mode)
-    </button>
+    <button id="refreshButton" class="secondary" type="button">Refresh player list</button>
+    <button id="startButton" type="button" style="display:none">Start game</button>
+    <button id="testPlayersButton" class="secondary" type="button" style="display:none">Add test players (test mode)</button>
     <p id="roleMessage" aria-live="polite"></p>
   </section>
 
@@ -125,9 +133,9 @@
     <div class="game-grid">
       <div>
         <div class="panel">
-          <h2>Players &amp; money</h2>
+          <h2>Players</h2>
           <div id="gamePlayers"></div>
-          <p class="small">Balances update when you refresh the game data.</p>
+          <p class="small">Only your own balance is shown.</p>
         </div>
         <div class="panel">
           <h2>Request Money</h2>
@@ -140,10 +148,7 @@
           <button id="sendRequestButton" type="button">Send money request</button>
           <p id="requestStatus" aria-live="polite"></p>
         </div>
-        <div class="panel">
-          <h2>Money requests</h2>
-          <div id="requestsList"></div>
-        </div>
+        <div class="panel"><h2>Money requests</h2><div id="requestsList"></div></div>
       </div>
       <div class="panel">
         <h2>Room chat</h2>
@@ -159,10 +164,7 @@
   </section>
 
   <p id="message" aria-live="polite"></p>
-  <p class="note">
-    Your physical board handles movement, properties and clues.
-    This website is your digital game companion.
-  </p>
+  <p class="note">Your physical board handles movement, properties and clues. This website is your digital game companion.</p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -178,9 +180,9 @@
   let currentRoomCode = "";
   let isHost = false;
   let refreshTimer = null;
-  let gameRefreshTimer = null;
   let gameStarted = false;
-  const seenMessageIds = new Set();
+  let gameRefreshTimer = null;
+  let seenMessageIds = new Set();
 
   const money = value => "£" + Number(value || 0).toLocaleString("en-GB", {
     maximumFractionDigits: 0
@@ -223,31 +225,57 @@
     $("roomCode").textContent = code;
     $("lobbyCode").textContent = code;
     $("roomArea").style.display = "none";
+    $("setupArea").style.display = "none";
+    $("siteHeader").style.display = "none";
     $("lobby").style.display = "block";
     $("gameArea").style.display = "none";
     $("roleMessage").textContent = "";
     refreshLobby();
-
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = setInterval(refreshLobby, 4000);
+  }
+
+  function setRoleInterface(role) {
+    if (role !== "scammer" && role !== "scout") {
+      $("roleDisplay").textContent = "Your role could not be loaded. Refresh game data.";
+      return false;
+    }
+    $("roleDisplay").textContent = role === "scammer"
+      ? "You are the SCAMMER."
+      : "You are a SCOUT.";
+    $("gameArea").dataset.role = role;
+    $("gameArea").classList.toggle("scammer-view", role === "scammer");
+    $("gameArea").classList.toggle("scout-view", role === "scout");
+    return true;
+  }
+
+  function showGame() {
+    $("siteHeader").style.display = "none";
+    $("setupArea").style.display = "none";
+    $("lobby").style.display = "none";
+    $("gameArea").style.display = "block";
+    gameStarted = true;
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = null;
+    refreshGame();
+    if (!gameRefreshTimer) gameRefreshTimer = setInterval(refreshGame, 3500);
   }
 
   async function refreshLobby() {
     if (!currentRoomCode) return;
     $("refreshButton").disabled = true;
-
     try {
       const result = await callGameServer({
         action: "get_lobby",
         roomCode: currentRoomCode
       });
 
-      isHost = result.isHost;
-      const players = result.players || [];
+      isHost = Boolean(result.isHost);
+      const players = Array.isArray(result.players) ? result.players : [];
       $("playerCount").textContent = result.playerCount ?? players.length;
       $("lobbyStatus").textContent = result.status || "waiting";
-
       $("playerList").replaceChildren();
+
       players.forEach(player => {
         const li = document.createElement("li");
         li.textContent = typeof player === "string" ? player : player.nickname;
@@ -256,28 +284,15 @@
 
       const playing = result.status === "playing";
       $("startButton").style.display = isHost && !playing ? "block" : "none";
-      $("testPlayersButton").style.display = isHost && !playing ? "block" : "none";
+
+      $("testPlayersButton").style.display =
+        isHost && !playing ? "block" : "none";
 
       if (playing) {
-        gameStarted = true;
-        $("lobbyMessage").textContent = "The game has started.";
-        $("roleDisplay").textContent = result.myRole === "scammer"
-          ? "You are the SCAMMER."
-          : result.myRole === "scout"
-            ? "You are a SCOUT."
-            : "Your role could not be loaded. Refresh the lobby.";
-
-        $("gameArea").style.display = "block";
-        refreshGame();
-
-        if (!gameRefreshTimer) {
-          gameRefreshTimer = setInterval(refreshGame, 3500);
-        }
-
-        if (result.myRole) {
-          $("lobby").style.display = "none";
-          if (refreshTimer) clearInterval(refreshTimer);
-        }
+        const role = String(result.myRole || "").toLowerCase();
+        if (setRoleInterface(role)) showGame();
+        else $("lobbyMessage").textContent =
+          "The game has started, but your role hasn't loaded yet. Refresh shortly.";
       } else {
         $("lobbyMessage").textContent = isHost
           ? "You are the host. Start when 5–7 players have joined."
@@ -293,7 +308,6 @@
   $("joinForm").addEventListener("submit", async event => {
     event.preventDefault();
     const nickname = $("nickname").value.trim();
-
     if (!nickname) {
       $("message").textContent = "Enter a nickname.";
       return;
@@ -301,7 +315,6 @@
 
     $("enterButton").disabled = true;
     $("message").textContent = "Signing in...";
-
     try {
       await signIn();
       $("nickname").disabled = true;
@@ -318,7 +331,6 @@
   $("createButton").addEventListener("click", async () => {
     $("createButton").disabled = true;
     $("roomResult").textContent = "Creating room...";
-
     try {
       await signIn();
       const result = await callGameServer({
@@ -337,7 +349,6 @@
   $("joinButton").addEventListener("click", async () => {
     $("joinButton").disabled = true;
     $("roomResult").textContent = "Joining room...";
-
     try {
       await signIn();
       const result = await callGameServer({
@@ -359,7 +370,6 @@
   $("testPlayersButton").addEventListener("click", async () => {
     $("testPlayersButton").disabled = true;
     $("lobbyMessage").textContent = "Adding test players...";
-
     try {
       const result = await callGameServer({
         action: "create_test_players",
@@ -377,26 +387,14 @@
   $("startButton").addEventListener("click", async () => {
     $("startButton").disabled = true;
     $("lobbyMessage").textContent = "Starting game...";
-
     try {
       const result = await callGameServer({
         action: "start_game",
         roomCode: currentRoomCode
       });
-
-      if (result.myRole) {
-        gameStarted = true;
-        $("roleDisplay").textContent = result.myRole === "scammer"
-          ? "You are the SCAMMER."
-          : "You are a SCOUT.";
-        $("gameArea").style.display = "block";
-        $("lobby").style.display = "none";
-        if (refreshTimer) clearInterval(refreshTimer);
-        await refreshGame();
-
-        if (!gameRefreshTimer) {
-          gameRefreshTimer = setInterval(refreshGame, 3500);
-        }
+      const role = String(result.myRole || "").toLowerCase();
+      if (setRoleInterface(role)) {
+        showGame();
       } else {
         await refreshLobby();
       }
@@ -409,28 +407,26 @@
 
   async function refreshGame() {
     if (!currentRoomCode || !gameStarted) return;
-
     try {
       const result = await callGameServer({
         action: "get_game_state",
         roomCode: currentRoomCode
       });
 
-      $("myBalance").textContent = money(result.me.balance);
+      if (result.me && result.me.role) setRoleInterface(String(result.me.role).toLowerCase());
+      if (result.me && result.me.balance !== undefined) {
+        $("myBalance").textContent = money(result.me.balance);
+      }
+
       $("gamePlayers").replaceChildren();
       $("requestTo").replaceChildren();
 
-      for (const player of result.players) {
+      for (const player of (result.players || [])) {
         const row = document.createElement("div");
         row.className = "balance-row";
-
         const name = document.createElement("span");
         name.textContent = player.nickname + (player.isMe ? " (you)" : "");
-
-        const balance = document.createElement("strong");
-        balance.textContent = money(player.balance);
-
-        row.append(name, balance);
+        row.append(name);
         $("gamePlayers").appendChild(row);
 
         if (!player.isMe) {
@@ -442,61 +438,46 @@
       }
 
       const log = $("chatLog");
-
-      for (const msg of result.messages) {
+      for (const msg of (result.messages || [])) {
         if (seenMessageIds.has(msg.id)) continue;
         seenMessageIds.add(msg.id);
-
         const item = document.createElement("div");
         item.className = "chat-message";
-
         const meta = document.createElement("div");
         meta.className = "chat-meta";
         meta.textContent = msg.nickname + " · " +
           new Date(msg.created_at).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit"
+            hour: "2-digit", minute: "2-digit"
           });
-
         const content = document.createElement("div");
         content.textContent = msg.message;
-
         item.append(meta, content);
         log.appendChild(item);
       }
-
       log.scrollTop = log.scrollHeight;
-      $("requestsList").replaceChildren();
 
-      for (const req of result.requests) {
+      $("requestsList").replaceChildren();
+      for (const req of (result.requests || [])) {
         const card = document.createElement("div");
         card.className = "request-card";
-
         const heading = document.createElement("strong");
         heading.textContent = `${req.fromNickname} requests ${money(req.amount)} from ${req.toNickname}`;
-
         const note = document.createElement("p");
         note.textContent = req.note || "No message included.";
-
         const state = document.createElement("p");
         state.className = "small";
         state.textContent = "Status: " + req.status;
-
         card.append(heading, note, state);
 
         if (req.status === "pending" && req.to_user_id === result.me.userId) {
           const actions = document.createElement("div");
           actions.className = "inline-actions";
-
           for (const [label, decision] of [["Accept", "accept"], ["Reject", "reject"]]) {
-            const button = document.createElement("button");
-            button.textContent = label;
-
-            if (decision === "reject") button.className = "secondary";
-
-            button.addEventListener("click", async () => {
-              button.disabled = true;
-
+            const btn = document.createElement("button");
+            btn.textContent = label;
+            if (decision === "reject") btn.className = "secondary";
+            btn.addEventListener("click", async () => {
+              btn.disabled = true;
               try {
                 await callGameServer({
                   action: "respond_money_request",
@@ -507,23 +488,19 @@
                 await refreshGame();
               } catch (error) {
                 $("gameStatus").textContent = error.message;
-                button.disabled = false;
+                btn.disabled = false;
               }
             });
-
-            actions.appendChild(button);
+            actions.appendChild(btn);
           }
-
           card.appendChild(actions);
         }
-
         $("requestsList").appendChild(card);
       }
 
-      if (!result.requests.length) {
+      if (!(result.requests || []).length) {
         $("requestsList").textContent = "No money requests yet.";
       }
-
       $("gameStatus").textContent = "Game data updated.";
     } catch (error) {
       $("gameStatus").textContent = "Game update failed: " + error.message;
@@ -532,13 +509,10 @@
 
   $("chatForm").addEventListener("submit", async event => {
     event.preventDefault();
-
     const input = $("chatInput");
     const message = input.value.trim();
     if (!message) return;
-
     $("chatSendButton").disabled = true;
-
     try {
       await callGameServer({
         action: "send_message",
@@ -563,16 +537,13 @@
       $("requestStatus").textContent = "Choose a player.";
       return;
     }
-
     if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000000) {
-      $("requestStatus").textContent =
-        "Enter a whole amount between £1 and £1,000,000.";
+      $("requestStatus").textContent = "Enter a whole amount between £1 and £1,000,000.";
       return;
     }
 
     const button = $("sendRequestButton");
     button.disabled = true;
-
     try {
       await callGameServer({
         action: "request_money",
@@ -581,7 +552,6 @@
         amount,
         note
       });
-
       $("requestStatus").textContent = "Money request sent.";
       $("requestAmount").value = "";
       $("requestNote").value = "";
