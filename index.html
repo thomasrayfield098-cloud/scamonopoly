@@ -56,6 +56,18 @@
     #playerList { padding-left: 24px; line-height: 1.9; }
     .status { color: #a8f0d0; font-weight: bold; }
     .note { font-size: 12px; color: #9eabc6; margin-top: 24px; }
+    .game-grid { display:grid; grid-template-columns:1fr; gap:14px; text-align:left; }
+    .balance-row { display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid #354466; }
+    .balance-row:last-child { border-bottom:0; }
+    .chat-log { height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+    .chat-message { background:#293958; padding:10px 12px; border-radius:12px; overflow-wrap:anywhere; }
+    .chat-meta { color:#a8f0d0; font-size:12px; margin-bottom:4px; }
+    .request-card { border:1px solid #506184; border-radius:12px; padding:12px; margin:10px 0; }
+    .inline-actions { display:flex; gap:8px; }
+    .inline-actions button { flex:1; }
+    .inline-actions .secondary { margin-top:12px; }
+    .small { font-size:12px; color:#9eabc6; }
+    @media(min-width:700px){ .game-grid { grid-template-columns: 0.9fr 1.1fr; } }
   </style>
 </head>
 <body>
@@ -97,10 +109,9 @@
     <button id="startButton" type="button" style="display:none">
       Start game
     </button>
-    <button id="testPlayersButton" class="secondary"
-        type="button" style="display:none">
-  🧪 Test Players
-</button>
+    <button id="testPlayersButton" class="secondary" type="button" style="display:none">
+      Add test players (test mode)
+    </button>
     <p id="roleMessage" aria-live="polite"></p>
   </section>
 
@@ -109,6 +120,41 @@
       <h2>Your secret role</h2>
       <p id="roleDisplay" class="status"></p>
       <p>Keep your role secret. Use the physical board to play.</p>
+      <h2>Your balance: <span id="myBalance" class="status">£1,000</span></h2>
+    </div>
+    <div class="game-grid">
+      <div>
+        <div class="panel">
+          <h2>Players &amp; money</h2>
+          <div id="gamePlayers"></div>
+          <p class="small">Balances update when you refresh the game data.</p>
+        </div>
+        <div class="panel">
+          <h2>Request Money</h2>
+          <label for="requestTo">Request from</label>
+          <select id="requestTo" style="width:100%;padding:12px;border-radius:10px;margin-top:8px;background:#111a2d;color:white;border:1px solid #506184"></select>
+          <label for="requestAmount">Amount (£)</label>
+          <input id="requestAmount" type="number" min="1" max="1000000" step="1" placeholder="e.g. 100">
+          <label for="requestNote">Message (optional)</label>
+          <input id="requestNote" maxlength="240" placeholder="Why are you requesting money?">
+          <button id="sendRequestButton" type="button">Send money request</button>
+          <p id="requestStatus" aria-live="polite"></p>
+        </div>
+        <div class="panel">
+          <h2>Money requests</h2>
+          <div id="requestsList"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Room chat</h2>
+        <div id="chatLog" class="chat-log" aria-live="polite"></div>
+        <form id="chatForm">
+          <input id="chatInput" maxlength="500" placeholder="Write a message…" aria-label="Chat message" required>
+          <button id="chatSendButton" type="submit">Send message</button>
+        </form>
+        <button id="gameRefreshButton" class="secondary" type="button">Refresh game data</button>
+        <p id="gameStatus" aria-live="polite"></p>
+      </div>
     </div>
   </section>
 
@@ -132,7 +178,13 @@
   let currentRoomCode = "";
   let isHost = false;
   let refreshTimer = null;
+  let gameRefreshTimer = null;
   let gameStarted = false;
+  const seenMessageIds = new Set();
+
+  const money = value => "£" + Number(value || 0).toLocaleString("en-GB", {
+    maximumFractionDigits: 0
+  });
 
   async function signIn() {
     const { data, error } = await sb.auth.getSession();
@@ -148,8 +200,7 @@
     if (!data.session) throw new Error("Please sign in again.");
 
     const response = await fetch(
-      window.SCAMONOPOLY_CONFIG.SUPABASE_URL +
-        "/functions/v1/scamonopoly",
+      window.SCAMONOPOLY_CONFIG.SUPABASE_URL + "/functions/v1/scamonopoly",
       {
         method: "POST",
         headers: {
@@ -176,6 +227,7 @@
     $("gameArea").style.display = "none";
     $("roleMessage").textContent = "";
     refreshLobby();
+
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = setInterval(refreshLobby, 4000);
   }
@@ -183,6 +235,7 @@
   async function refreshLobby() {
     if (!currentRoomCode) return;
     $("refreshButton").disabled = true;
+
     try {
       const result = await callGameServer({
         action: "get_lobby",
@@ -197,17 +250,13 @@
       $("playerList").replaceChildren();
       players.forEach(player => {
         const li = document.createElement("li");
-        li.textContent = typeof player === "string"
-          ? player
-          : player.nickname;
+        li.textContent = typeof player === "string" ? player : player.nickname;
         $("playerList").appendChild(li);
       });
 
       const playing = result.status === "playing";
-      $("startButton").style.display =
-        isHost && !playing ? "block" : "none";
-      $("testPlayersButton").style.display =
-  isHost && !playing ? "block" : "none";
+      $("startButton").style.display = isHost && !playing ? "block" : "none";
+      $("testPlayersButton").style.display = isHost && !playing ? "block" : "none";
 
       if (playing) {
         gameStarted = true;
@@ -217,7 +266,14 @@
           : result.myRole === "scout"
             ? "You are a SCOUT."
             : "Your role could not be loaded. Refresh the lobby.";
+
         $("gameArea").style.display = "block";
+        refreshGame();
+
+        if (!gameRefreshTimer) {
+          gameRefreshTimer = setInterval(refreshGame, 3500);
+        }
+
         if (result.myRole) {
           $("lobby").style.display = "none";
           if (refreshTimer) clearInterval(refreshTimer);
@@ -237,6 +293,7 @@
   $("joinForm").addEventListener("submit", async event => {
     event.preventDefault();
     const nickname = $("nickname").value.trim();
+
     if (!nickname) {
       $("message").textContent = "Enter a nickname.";
       return;
@@ -244,6 +301,7 @@
 
     $("enterButton").disabled = true;
     $("message").textContent = "Signing in...";
+
     try {
       await signIn();
       $("nickname").disabled = true;
@@ -260,6 +318,7 @@
   $("createButton").addEventListener("click", async () => {
     $("createButton").disabled = true;
     $("roomResult").textContent = "Creating room...";
+
     try {
       await signIn();
       const result = await callGameServer({
@@ -278,6 +337,7 @@
   $("joinButton").addEventListener("click", async () => {
     $("joinButton").disabled = true;
     $("roomResult").textContent = "Joining room...";
+
     try {
       await signIn();
       const result = await callGameServer({
@@ -295,9 +355,9 @@
   });
 
   $("refreshButton").addEventListener("click", refreshLobby);
-    $("testPlayersButton").addEventListener("click", async () => {
-    const button = $("testPlayersButton");
-    button.disabled = true;
+
+  $("testPlayersButton").addEventListener("click", async () => {
+    $("testPlayersButton").disabled = true;
     $("lobbyMessage").textContent = "Adding test players...";
 
     try {
@@ -305,33 +365,38 @@
         action: "create_test_players",
         roomCode: currentRoomCode
       });
-
-      $("lobbyMessage").textContent =
-        result.message || "Test players added.";
+      $("lobbyMessage").textContent = result.message || "Test players added.";
       await refreshLobby();
     } catch (error) {
-      $("lobbyMessage").textContent =
-        "Test players couldn't be added: " + error.message;
+      $("lobbyMessage").textContent = "Could not add test players: " + error.message;
     } finally {
-      button.disabled = false;
+      $("testPlayersButton").disabled = false;
     }
   });
 
   $("startButton").addEventListener("click", async () => {
     $("startButton").disabled = true;
     $("lobbyMessage").textContent = "Starting game...";
+
     try {
       const result = await callGameServer({
         action: "start_game",
         roomCode: currentRoomCode
       });
+
       if (result.myRole) {
+        gameStarted = true;
         $("roleDisplay").textContent = result.myRole === "scammer"
           ? "You are the SCAMMER."
           : "You are a SCOUT.";
         $("gameArea").style.display = "block";
         $("lobby").style.display = "none";
         if (refreshTimer) clearInterval(refreshTimer);
+        await refreshGame();
+
+        if (!gameRefreshTimer) {
+          gameRefreshTimer = setInterval(refreshGame, 3500);
+        }
       } else {
         await refreshLobby();
       }
@@ -342,8 +407,197 @@
     }
   });
 
+  async function refreshGame() {
+    if (!currentRoomCode || !gameStarted) return;
+
+    try {
+      const result = await callGameServer({
+        action: "get_game_state",
+        roomCode: currentRoomCode
+      });
+
+      $("myBalance").textContent = money(result.me.balance);
+      $("gamePlayers").replaceChildren();
+      $("requestTo").replaceChildren();
+
+      for (const player of result.players) {
+        const row = document.createElement("div");
+        row.className = "balance-row";
+
+        const name = document.createElement("span");
+        name.textContent = player.nickname + (player.isMe ? " (you)" : "");
+
+        const balance = document.createElement("strong");
+        balance.textContent = money(player.balance);
+
+        row.append(name, balance);
+        $("gamePlayers").appendChild(row);
+
+        if (!player.isMe) {
+          const option = document.createElement("option");
+          option.value = player.user_id;
+          option.textContent = player.nickname;
+          $("requestTo").appendChild(option);
+        }
+      }
+
+      const log = $("chatLog");
+
+      for (const msg of result.messages) {
+        if (seenMessageIds.has(msg.id)) continue;
+        seenMessageIds.add(msg.id);
+
+        const item = document.createElement("div");
+        item.className = "chat-message";
+
+        const meta = document.createElement("div");
+        meta.className = "chat-meta";
+        meta.textContent = msg.nickname + " · " +
+          new Date(msg.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+
+        const content = document.createElement("div");
+        content.textContent = msg.message;
+
+        item.append(meta, content);
+        log.appendChild(item);
+      }
+
+      log.scrollTop = log.scrollHeight;
+      $("requestsList").replaceChildren();
+
+      for (const req of result.requests) {
+        const card = document.createElement("div");
+        card.className = "request-card";
+
+        const heading = document.createElement("strong");
+        heading.textContent = `${req.fromNickname} requests ${money(req.amount)} from ${req.toNickname}`;
+
+        const note = document.createElement("p");
+        note.textContent = req.note || "No message included.";
+
+        const state = document.createElement("p");
+        state.className = "small";
+        state.textContent = "Status: " + req.status;
+
+        card.append(heading, note, state);
+
+        if (req.status === "pending" && req.to_user_id === result.me.userId) {
+          const actions = document.createElement("div");
+          actions.className = "inline-actions";
+
+          for (const [label, decision] of [["Accept", "accept"], ["Reject", "reject"]]) {
+            const button = document.createElement("button");
+            button.textContent = label;
+
+            if (decision === "reject") button.className = "secondary";
+
+            button.addEventListener("click", async () => {
+              button.disabled = true;
+
+              try {
+                await callGameServer({
+                  action: "respond_money_request",
+                  roomCode: currentRoomCode,
+                  requestId: req.id,
+                  decision
+                });
+                await refreshGame();
+              } catch (error) {
+                $("gameStatus").textContent = error.message;
+                button.disabled = false;
+              }
+            });
+
+            actions.appendChild(button);
+          }
+
+          card.appendChild(actions);
+        }
+
+        $("requestsList").appendChild(card);
+      }
+
+      if (!result.requests.length) {
+        $("requestsList").textContent = "No money requests yet.";
+      }
+
+      $("gameStatus").textContent = "Game data updated.";
+    } catch (error) {
+      $("gameStatus").textContent = "Game update failed: " + error.message;
+    }
+  }
+
+  $("chatForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const input = $("chatInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+    $("chatSendButton").disabled = true;
+
+    try {
+      await callGameServer({
+        action: "send_message",
+        roomCode: currentRoomCode,
+        message
+      });
+      input.value = "";
+      await refreshGame();
+    } catch (error) {
+      $("gameStatus").textContent = error.message;
+    } finally {
+      $("chatSendButton").disabled = false;
+    }
+  });
+
+  $("sendRequestButton").addEventListener("click", async () => {
+    const toUserId = $("requestTo").value;
+    const amount = Number($("requestAmount").value);
+    const note = $("requestNote").value.trim();
+
+    if (!toUserId) {
+      $("requestStatus").textContent = "Choose a player.";
+      return;
+    }
+
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000000) {
+      $("requestStatus").textContent =
+        "Enter a whole amount between £1 and £1,000,000.";
+      return;
+    }
+
+    const button = $("sendRequestButton");
+    button.disabled = true;
+
+    try {
+      await callGameServer({
+        action: "request_money",
+        roomCode: currentRoomCode,
+        toUserId,
+        amount,
+        note
+      });
+
+      $("requestStatus").textContent = "Money request sent.";
+      $("requestAmount").value = "";
+      $("requestNote").value = "";
+      await refreshGame();
+    } catch (error) {
+      $("requestStatus").textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("gameRefreshButton").addEventListener("click", refreshGame);
+
   window.addEventListener("beforeunload", () => {
     if (refreshTimer) clearInterval(refreshTimer);
+    if (gameRefreshTimer) clearInterval(gameRefreshTimer);
   });
 })();
 </script>
