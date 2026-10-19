@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +14,7 @@
       background: #10172a;
     }
     main {
-      width: 100%; max-width: 560px; text-align: center;
+      width: 100%; max-width: 760px; text-align: center;
       background: #1b2540; border: 1px solid #354466;
       border-radius: 24px; padding: clamp(16px, 4vw, 32px) clamp(12px, 4vw, 24px);
       box-shadow: 0 20px 60px #0005;
@@ -26,16 +27,17 @@
     h1 { font-size: clamp(36px, 9vw, 54px); margin: 22px 0 10px; }
     h1 span { color: #a8f0d0; }
     p { color: #c3cce0; line-height: 1.6; }
-    input, button {
+    input, button, select {
       width: 100%; padding: 14px; border-radius: 12px;
       font-size: 16px; margin-top: 12px;
     }
-    input {
+    input, select {
       border: 1px solid #506184; background: #111a2d; color: white;
     }
     button {
       border: 0; background: #a8f0d0; color: #10271f;
-      font-weight: bold; cursor: pointer;
+      font-weight: bold; cursor: pointer; min-height: 46px;
+      touch-action: manipulation;
     }
     button:disabled { opacity: .6; cursor: wait; }
     .secondary { background: #293958; color: #f5f7ff; }
@@ -49,35 +51,51 @@
     .panel {
       background: #111a2d; border: 1px solid #354466;
       border-radius: 16px; padding: 16px; margin-top: 16px;
-      text-align: left;
+      text-align: left; min-width: 0;
     }
     .panel h2 { margin-top: 0; font-size: 20px; }
     #playerList { padding-left: 24px; line-height: 1.9; }
     .status { color: #a8f0d0; font-weight: bold; }
     .note { font-size: 12px; color: #9eabc6; margin-top: 24px; }
-    .game-grid { display:grid; grid-template-columns:1fr; gap:14px; text-align:left; }
-    .balance-row { display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid #354466; }
-    .balance-row:last-child { border-bottom:0; }
-    .chat-log { height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
-    .chat-message { background:#293958; padding:10px 12px; border-radius:12px; overflow-wrap:anywhere; }
-    .chat-meta { color:#a8f0d0; font-size:12px; margin-bottom:4px; }
-    .request-card { border:1px solid #506184; border-radius:12px; padding:12px; margin:10px 0; }
-    .inline-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    .inline-actions button { flex:1; min-width:110px; }
-    .small { font-size:12px; color:#9eabc6; }
-    select { max-width:100%; font-size:16px; }
-    button { min-height:46px; touch-action:manipulation; }
+    .game-grid {
+      display: grid; grid-template-columns: 1fr;
+      gap: 14px; text-align: left;
+    }
+    .balance-row {
+      display: flex; justify-content: space-between; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid #354466;
+    }
+    .balance-row:last-child { border-bottom: 0; }
+    .chat-log {
+      height: 260px; overflow-y: auto; display: flex;
+      flex-direction: column; gap: 10px;
+    }
+    .chat-message {
+      background: #293958; padding: 10px 12px;
+      border-radius: 12px; overflow-wrap: anywhere;
+    }
+    .chat-message.mine { background: #23483f; }
+    .chat-meta { color: #a8f0d0; font-size: 12px; margin-bottom: 4px; }
+    .request-card {
+      border: 1px solid #506184; border-radius: 12px;
+      padding: 12px; margin: 10px 0; overflow-wrap: anywhere;
+    }
+    .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .inline-actions button { flex: 1; min-width: 110px; }
+    .small { font-size: 12px; color: #9eabc6; }
+    label { display: block; margin-top: 12px; color: #c3cce0; }
+    .empty-state { color: #9eabc6; font-size: 14px; }
     @media(min-width:700px) {
-      .game-grid { grid-template-columns:0.9fr 1.1fr; }
+      .game-grid { grid-template-columns: .9fr 1.1fr; }
     }
     @media(max-width:420px) {
-      body { padding:8px; align-items:flex-start; }
-      main { border-radius:16px; padding:14px 10px; }
-      .panel { padding:12px; }
-      h1 { font-size:clamp(30px, 10vw, 42px); }
-      .chat-log { height:220px; }
-      .inline-actions { flex-direction:column; gap:4px; }
-      .inline-actions button { margin-top:6px; }
+      body { padding: 8px; align-items: flex-start; }
+      main { border-radius: 16px; padding: 14px 10px; }
+      .panel { padding: 12px; }
+      h1 { font-size: clamp(30px, 10vw, 42px); }
+      .chat-log { height: 220px; }
+      .inline-actions { flex-direction: column; gap: 4px; }
+      .inline-actions button { margin-top: 6px; }
     }
   </style>
 </head>
@@ -91,11 +109,12 @@
 
   <section id="setupArea">
     <form id="joinForm">
-      <input id="nickname" maxlength="20"
+      <input id="nickname" maxlength="24"
         placeholder="Enter your player nickname"
         aria-label="Player nickname" required>
       <button id="enterButton" type="submit">Enter the game</button>
     </form>
+
     <section id="roomArea">
       <button id="createButton" type="button">Create a room</button>
       <p>Or join a friend's room:</p>
@@ -130,6 +149,7 @@
       <p>Keep your role secret. Use the physical board to play.</p>
       <h2>Your balance: <span id="myBalance" class="status">£1,000</span></h2>
     </div>
+
     <div class="game-grid">
       <div>
         <div class="panel">
@@ -137,28 +157,46 @@
           <div id="gamePlayers"></div>
           <p class="small">Only your own balance is shown.</p>
         </div>
+
         <div class="panel">
           <h2>Request Money</h2>
-          <label for="requestTo">Request from</label>
-          <select id="requestTo" style="width:100%;padding:12px;border-radius:10px;margin-top:8px;background:#111a2d;color:white;border:1px solid #506184"></select>
+          <label for="requestTo">Request money from</label>
+          <select id="requestTo"></select>
           <label for="requestAmount">Amount (£)</label>
-          <input id="requestAmount" type="number" min="1" max="1000000" step="1" placeholder="e.g. 100">
-          <label for="requestNote">Message (optional)</label>
-          <input id="requestNote" maxlength="240" placeholder="Why are you requesting money?">
-          <button id="sendRequestButton" type="button">Send money request</button>
+          <input id="requestAmount" type="number" min="1" max="1000000"
+            step="1" placeholder="e.g. 100">
+          <label for="requestNote">Private note (optional)</label>
+          <input id="requestNote" maxlength="240"
+            placeholder="Why are you requesting money?">
+          <button id="sendRequestButton" type="button">Send private money request</button>
           <p id="requestStatus" aria-live="polite"></p>
         </div>
-        <div class="panel"><h2>Money requests</h2><div id="requestsList"></div></div>
+
+        <div class="panel">
+          <h2>Your Money Requests</h2>
+          <p class="small">Only requests sent by you or sent to you appear here.</p>
+          <div id="requestsList"></div>
+        </div>
       </div>
-      <div class="panel">
-        <h2>Room chat</h2>
-        <div id="chatLog" class="chat-log" aria-live="polite"></div>
-        <form id="chatForm">
-          <input id="chatInput" maxlength="500" placeholder="Write a message…" aria-label="Chat message" required>
-          <button id="chatSendButton" type="submit">Send message</button>
-        </form>
-        <button id="gameRefreshButton" class="secondary" type="button">Refresh game data</button>
-        <p id="gameStatus" aria-live="polite"></p>
+
+      <div>
+        <div class="panel">
+          <h2>Private Messages</h2>
+          <label for="messageTo">Choose a player</label>
+          <select id="messageTo"></select>
+          <p class="small">Only you and the selected player can see this conversation in the game.</p>
+          <div id="chatLog" class="chat-log" aria-live="polite">
+            <p class="empty-state">Choose a player to load your conversation.</p>
+          </div>
+          <form id="chatForm">
+            <input id="chatInput" maxlength="500"
+              placeholder="Write a private message…"
+              aria-label="Private message" required>
+            <button id="chatSendButton" type="submit">Send private message</button>
+          </form>
+          <button id="gameRefreshButton" class="secondary" type="button">Refresh game data</button>
+          <p id="gameStatus" aria-live="polite"></p>
+        </div>
       </div>
     </div>
   </section>
@@ -171,18 +209,28 @@
 <script src="./config.js"></script>
 <script>
 (() => {
+  const config = window.SCAMONOPOLY_CONFIG;
+  if (!window.supabase || !config?.SUPABASE_URL || !config?.SUPABASE_PUBLISHABLE_KEY) {
+    document.getElementById("message").textContent =
+      "The website configuration could not be loaded. Check config.js.";
+    return;
+  }
+
   const sb = window.supabase.createClient(
-    window.SCAMONOPOLY_CONFIG.SUPABASE_URL,
-    window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY
+    config.SUPABASE_URL,
+    config.SUPABASE_PUBLISHABLE_KEY
   );
 
   const $ = id => document.getElementById(id);
+
   let currentRoomCode = "";
   let isHost = false;
   let refreshTimer = null;
   let gameStarted = false;
   let gameRefreshTimer = null;
-  let seenMessageIds = new Set();
+  let selectedMessageUserId = "";
+  let messageRefreshInProgress = false;
+  let gameRefreshInProgress = false;
 
   const money = value => "£" + Number(value || 0).toLocaleString("en-GB", {
     maximumFractionDigits: 0
@@ -192,6 +240,7 @@
     const { data, error } = await sb.auth.getSession();
     if (error) throw error;
     if (data.session) return;
+
     const result = await sb.auth.signInAnonymously();
     if (result.error) throw result.error;
   }
@@ -202,19 +251,25 @@
     if (!data.session) throw new Error("Please sign in again.");
 
     const response = await fetch(
-      window.SCAMONOPOLY_CONFIG.SUPABASE_URL + "/functions/v1/scamonopoly",
+      config.SUPABASE_URL + "/functions/v1/scamonopoly",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": window.SCAMONOPOLY_CONFIG.SUPABASE_PUBLISHABLE_KEY,
+          "apikey": config.SUPABASE_PUBLISHABLE_KEY,
           "Authorization": "Bearer " + data.session.access_token
         },
         body: JSON.stringify(payload)
       }
     );
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("The server returned an invalid response.");
+    }
+
     if (!response.ok) throw new Error(result.error || "Request failed.");
     if (result.error) throw new Error(result.error);
     return result;
@@ -231,21 +286,23 @@
     $("gameArea").style.display = "none";
     $("roleMessage").textContent = "";
     refreshLobby();
+
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = setInterval(refreshLobby, 4000);
   }
 
   function setRoleInterface(role) {
     if (role !== "scammer" && role !== "scout") {
-      $("roleDisplay").textContent = "Your role could not be loaded. Refresh game data.";
+      $("roleDisplay").textContent =
+        "Your role could not be loaded. Refresh game data.";
       return false;
     }
+
     $("roleDisplay").textContent = role === "scammer"
       ? "You are the SCAMMER."
       : "You are a SCOUT.";
+
     $("gameArea").dataset.role = role;
-    $("gameArea").classList.toggle("scammer-view", role === "scammer");
-    $("gameArea").classList.toggle("scout-view", role === "scout");
     return true;
   }
 
@@ -255,15 +312,22 @@
     $("lobby").style.display = "none";
     $("gameArea").style.display = "block";
     gameStarted = true;
+
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = null;
+
     refreshGame();
-    if (!gameRefreshTimer) gameRefreshTimer = setInterval(refreshGame, 3500);
+
+    if (!gameRefreshTimer) {
+      gameRefreshTimer = setInterval(refreshGame, 5000);
+    }
   }
 
   async function refreshLobby() {
     if (!currentRoomCode) return;
+
     $("refreshButton").disabled = true;
+
     try {
       const result = await callGameServer({
         action: "get_lobby",
@@ -272,6 +336,7 @@
 
       isHost = Boolean(result.isHost);
       const players = Array.isArray(result.players) ? result.players : [];
+
       $("playerCount").textContent = result.playerCount ?? players.length;
       $("lobbyStatus").textContent = result.status || "waiting";
       $("playerList").replaceChildren();
@@ -283,16 +348,17 @@
       });
 
       const playing = result.status === "playing";
-      $("startButton").style.display = isHost && !playing ? "block" : "none";
 
-      $("testPlayersButton").style.display =
-        isHost && !playing ? "block" : "none";
+      $("startButton").style.display = isHost && !playing ? "block" : "none";
+      $("testPlayersButton").style.display = isHost && !playing ? "block" : "none";
 
       if (playing) {
-        const role = String(result.myRole || "").toLowerCase();
-        if (setRoleInterface(role)) showGame();
-        else $("lobbyMessage").textContent =
-          "The game has started, but your role hasn't loaded yet. Refresh shortly.";
+        if (setRoleInterface(String(result.myRole || "").toLowerCase())) {
+          showGame();
+        } else {
+          $("lobbyMessage").textContent =
+            "The game has started, but your role hasn't loaded yet. Refresh shortly.";
+        }
       } else {
         $("lobbyMessage").textContent = isHost
           ? "You are the host. Start when 5–7 players have joined."
@@ -307,6 +373,7 @@
 
   $("joinForm").addEventListener("submit", async event => {
     event.preventDefault();
+
     const nickname = $("nickname").value.trim();
     if (!nickname) {
       $("message").textContent = "Enter a nickname.";
@@ -315,6 +382,7 @@
 
     $("enterButton").disabled = true;
     $("message").textContent = "Signing in...";
+
     try {
       await signIn();
       $("nickname").disabled = true;
@@ -331,12 +399,15 @@
   $("createButton").addEventListener("click", async () => {
     $("createButton").disabled = true;
     $("roomResult").textContent = "Creating room...";
+
     try {
       await signIn();
+
       const result = await callGameServer({
         action: "create_room",
         nickname: $("nickname").value.trim()
       });
+
       $("roomResult").textContent = result.message || "Room created.";
       if (result.roomCode) showRoom(result.roomCode);
     } catch (error) {
@@ -349,13 +420,16 @@
   $("joinButton").addEventListener("click", async () => {
     $("joinButton").disabled = true;
     $("roomResult").textContent = "Joining room...";
+
     try {
       await signIn();
+
       const result = await callGameServer({
         action: "join_room",
         nickname: $("nickname").value.trim(),
         roomCode: $("roomInput").value.trim().toUpperCase()
       });
+
       $("roomResult").textContent = result.message || "Joined room.";
       if (result.roomCode) showRoom(result.roomCode);
     } catch (error) {
@@ -370,15 +444,18 @@
   $("testPlayersButton").addEventListener("click", async () => {
     $("testPlayersButton").disabled = true;
     $("lobbyMessage").textContent = "Adding test players...";
+
     try {
       const result = await callGameServer({
         action: "create_test_players",
         roomCode: currentRoomCode
       });
+
       $("lobbyMessage").textContent = result.message || "Test players added.";
       await refreshLobby();
     } catch (error) {
-      $("lobbyMessage").textContent = "Could not add test players: " + error.message;
+      $("lobbyMessage").textContent =
+        "Could not add test players: " + error.message;
     } finally {
       $("testPlayersButton").disabled = false;
     }
@@ -387,13 +464,14 @@
   $("startButton").addEventListener("click", async () => {
     $("startButton").disabled = true;
     $("lobbyMessage").textContent = "Starting game...";
+
     try {
       const result = await callGameServer({
         action: "start_game",
         roomCode: currentRoomCode
       });
-      const role = String(result.myRole || "").toLowerCase();
-      if (setRoleInterface(role)) {
+
+      if (setRoleInterface(String(result.myRole || "").toLowerCase())) {
         showGame();
       } else {
         await refreshLobby();
@@ -405,128 +483,280 @@
     }
   });
 
+  function fillPlayerSelect(select, players, selectedId) {
+    const previous = selectedId || select.value;
+    select.replaceChildren();
+
+    const others = players.filter(player => !player.isMe);
+
+    if (!others.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No other players";
+      select.appendChild(option);
+      return "";
+    }
+
+    for (const player of others) {
+      const option = document.createElement("option");
+      option.value = player.user_id;
+      option.textContent = player.nickname;
+      select.appendChild(option);
+    }
+
+    const stillExists = others.some(player => player.user_id === previous);
+    select.value = stillExists ? previous : others[0].user_id;
+    return select.value;
+  }
+
+  async function loadPrivateMessages() {
+    if (!currentRoomCode || !gameStarted || messageRefreshInProgress) return;
+
+    const otherUserId = $("messageTo").value;
+    if (!otherUserId) {
+      selectedMessageUserId = "";
+      $("chatLog").replaceChildren();
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "There are no other players to message.";
+      $("chatLog").appendChild(empty);
+      return;
+    }
+
+    selectedMessageUserId = otherUserId;
+    messageRefreshInProgress = true;
+
+    try {
+      const result = await callGameServer({
+        action: "get_direct_messages",
+        roomCode: currentRoomCode,
+        otherUserId
+      });
+
+      // Ignore an older response if the user selected a different player.
+      if ($("messageTo").value !== otherUserId) return;
+
+      const messages = Array.isArray(result.messages) ? result.messages : [];
+      const log = $("chatLog");
+      log.replaceChildren();
+
+      if (!messages.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty-state";
+        empty.textContent = "No private messages yet. Start the conversation!";
+        log.appendChild(empty);
+      } else {
+        for (const msg of messages) {
+          const item = document.createElement("div");
+          item.className = "chat-message" +
+            (msg.sender_id === (await getCurrentUserId()) ? " mine" : "");
+
+          const meta = document.createElement("div");
+          meta.className = "chat-meta";
+          meta.textContent =
+            (msg.sender_id === (await getCurrentUserId()) ? "You" : "Them") +
+            " · " +
+            new Date(msg.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+
+          const content = document.createElement("div");
+          content.textContent = msg.message;
+
+          item.append(meta, content);
+          log.appendChild(item);
+        }
+      }
+
+      log.scrollTop = log.scrollHeight;
+    } catch (error) {
+      $("gameStatus").textContent =
+        "Private messages couldn't load: " + error.message;
+    } finally {
+      messageRefreshInProgress = false;
+    }
+  }
+
+  let cachedUserId = null;
+
+  async function getCurrentUserId() {
+    if (cachedUserId) return cachedUserId;
+
+    const result = await callGameServer({ action: "get_my_id" });
+    cachedUserId = result.userId;
+    return cachedUserId;
+  }
+
+  $("messageTo").addEventListener("change", loadPrivateMessages);
+
+  $("chatForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const recipientId = $("messageTo").value;
+    const input = $("chatInput");
+    const message = input.value.trim();
+
+    if (!recipientId) {
+      $("gameStatus").textContent = "Choose a player first.";
+      return;
+    }
+
+    if (!message) return;
+
+    $("chatSendButton").disabled = true;
+
+    try {
+      await callGameServer({
+        action: "send_direct_message",
+        roomCode: currentRoomCode,
+        recipientId,
+        message
+      });
+
+      input.value = "";
+      await loadPrivateMessages();
+      $("gameStatus").textContent = "Private message sent.";
+    } catch (error) {
+      $("gameStatus").textContent =
+        "Message couldn't be sent: " + error.message;
+    } finally {
+      $("chatSendButton").disabled = false;
+    }
+  });
+
   async function refreshGame() {
-    if (!currentRoomCode || !gameStarted) return;
+    if (!currentRoomCode || !gameStarted || gameRefreshInProgress) return;
+
+    gameRefreshInProgress = true;
+
     try {
       const result = await callGameServer({
         action: "get_game_state",
         roomCode: currentRoomCode
       });
 
-      if (result.me && result.me.role) setRoleInterface(String(result.me.role).toLowerCase());
-      if (result.me && result.me.balance !== undefined) {
+      if (result.me?.role) {
+        setRoleInterface(String(result.me.role).toLowerCase());
+      }
+
+      if (result.me?.balance !== undefined) {
         $("myBalance").textContent = money(result.me.balance);
       }
 
-      $("gamePlayers").replaceChildren();
-      $("requestTo").replaceChildren();
+      const players = Array.isArray(result.players) ? result.players : [];
 
-      for (const player of (result.players || [])) {
+      $("gamePlayers").replaceChildren();
+
+      for (const player of players) {
         const row = document.createElement("div");
         row.className = "balance-row";
+
         const name = document.createElement("span");
         name.textContent = player.nickname + (player.isMe ? " (you)" : "");
-        row.append(name);
+
+        row.appendChild(name);
         $("gamePlayers").appendChild(row);
-
-        if (!player.isMe) {
-          const option = document.createElement("option");
-          option.value = player.user_id;
-          option.textContent = player.nickname;
-          $("requestTo").appendChild(option);
-        }
       }
 
-      const log = $("chatLog");
-      for (const msg of (result.messages || [])) {
-        if (seenMessageIds.has(msg.id)) continue;
-        seenMessageIds.add(msg.id);
-        const item = document.createElement("div");
-        item.className = "chat-message";
-        const meta = document.createElement("div");
-        meta.className = "chat-meta";
-        meta.textContent = msg.nickname + " · " +
-          new Date(msg.created_at).toLocaleTimeString([], {
-            hour: "2-digit", minute: "2-digit"
-          });
-        const content = document.createElement("div");
-        content.textContent = msg.message;
-        item.append(meta, content);
-        log.appendChild(item);
-      }
-      log.scrollTop = log.scrollHeight;
+      const previousRequestTarget = $("requestTo").value;
+      fillPlayerSelect($("requestTo"), players, previousRequestTarget);
 
+      const previousMessageTarget = $("messageTo").value;
+      const newMessageTarget = fillPlayerSelect(
+        $("messageTo"), players, previousMessageTarget
+      );
+
+      if (newMessageTarget !== selectedMessageUserId) {
+        selectedMessageUserId = newMessageTarget;
+        await loadPrivateMessages();
+      } else if (newMessageTarget) {
+        // Refresh the selected conversation so new incoming messages appear.
+        await loadPrivateMessages();
+      }
+
+      const requests = Array.isArray(result.requests) ? result.requests : [];
       $("requestsList").replaceChildren();
-      for (const req of (result.requests || [])) {
+
+      for (const request of requests) {
         const card = document.createElement("div");
         card.className = "request-card";
+
         const heading = document.createElement("strong");
-        heading.textContent = `${req.fromNickname} requests ${money(req.amount)} from ${req.toNickname}`;
+        heading.textContent =
+          `${request.fromNickname} requests ${money(request.amount)} from ${request.toNickname}`;
+
         const note = document.createElement("p");
-        note.textContent = req.note || "No message included.";
+        note.textContent = request.note || "No note included.";
+
         const state = document.createElement("p");
         state.className = "small";
-        state.textContent = "Status: " + req.status;
+        state.textContent = "Status: " + request.status;
+
         card.append(heading, note, state);
 
-        if (req.status === "pending" && req.to_user_id === result.me.userId) {
+        if (
+          request.status === "pending" &&
+          request.to_user_id === result.me.userId
+        ) {
           const actions = document.createElement("div");
           actions.className = "inline-actions";
-          for (const [label, decision] of [["Accept", "accept"], ["Reject", "reject"]]) {
-            const btn = document.createElement("button");
-            btn.textContent = label;
-            if (decision === "reject") btn.className = "secondary";
-            btn.addEventListener("click", async () => {
-              btn.disabled = true;
+
+          for (const [label, decision] of [
+            ["Accept", "accept"],
+            ["Reject", "reject"]
+          ]) {
+            const button = document.createElement("button");
+            button.textContent = label;
+
+            if (decision === "reject") {
+              button.className = "secondary";
+            }
+
+            button.addEventListener("click", async () => {
+              button.disabled = true;
+
               try {
                 await callGameServer({
                   action: "respond_money_request",
                   roomCode: currentRoomCode,
-                  requestId: req.id,
+                  requestId: request.id,
                   decision
                 });
+
+                $("gameStatus").textContent =
+                  decision === "accept" ? "Money request accepted." : "Money request rejected.";
+
                 await refreshGame();
               } catch (error) {
                 $("gameStatus").textContent = error.message;
-                btn.disabled = false;
+                button.disabled = false;
               }
             });
-            actions.appendChild(btn);
+
+            actions.appendChild(button);
           }
+
           card.appendChild(actions);
         }
+
         $("requestsList").appendChild(card);
       }
 
-      if (!(result.requests || []).length) {
-        $("requestsList").textContent = "No money requests yet.";
+      if (!requests.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty-state";
+        empty.textContent = "No money requests involving you yet.";
+        $("requestsList").appendChild(empty);
       }
+
       $("gameStatus").textContent = "Game data updated.";
     } catch (error) {
       $("gameStatus").textContent = "Game update failed: " + error.message;
+    } finally {
+      gameRefreshInProgress = false;
     }
   }
-
-  $("chatForm").addEventListener("submit", async event => {
-    event.preventDefault();
-    const input = $("chatInput");
-    const message = input.value.trim();
-    if (!message) return;
-    $("chatSendButton").disabled = true;
-    try {
-      await callGameServer({
-        action: "send_message",
-        roomCode: currentRoomCode,
-        message
-      });
-      input.value = "";
-      await refreshGame();
-    } catch (error) {
-      $("gameStatus").textContent = error.message;
-    } finally {
-      $("chatSendButton").disabled = false;
-    }
-  });
 
   $("sendRequestButton").addEventListener("click", async () => {
     const toUserId = $("requestTo").value;
@@ -537,13 +767,16 @@
       $("requestStatus").textContent = "Choose a player.";
       return;
     }
+
     if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000000) {
-      $("requestStatus").textContent = "Enter a whole amount between £1 and £1,000,000.";
+      $("requestStatus").textContent =
+        "Enter a whole amount between £1 and £1,000,000.";
       return;
     }
 
     const button = $("sendRequestButton");
     button.disabled = true;
+
     try {
       await callGameServer({
         action: "request_money",
@@ -552,7 +785,8 @@
         amount,
         note
       });
-      $("requestStatus").textContent = "Money request sent.";
+
+      $("requestStatus").textContent = "Private money request sent.";
       $("requestAmount").value = "";
       $("requestNote").value = "";
       await refreshGame();
